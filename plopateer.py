@@ -11,9 +11,14 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        pass # login
+        pass  # login
     else:
-        pass # login form
+        pass  # login form
+
+
+@app.route('/logout')
+def logout():
+    pass
 
 
 @app.route('/post/<int:post_id>')
