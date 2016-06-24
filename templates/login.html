@@ -14,4 +14,7 @@
             <dd><input type="submit" value="Login">
         </dl>
     </form>
+    {% if login %}
+        <p>No account? <a href="{{ url_for('register') }}" method="post">Register here.</a>
+    {% endif %}
 {% endblock %}

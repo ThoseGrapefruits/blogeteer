@@ -13,6 +13,7 @@
 import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
 from sqlite3 import dbapi2 as sqlite
+from wtforms import Form, BooleanField, StringField, PasswordField, validators
 from passlib.hash import pbkdf2_sha256
 
 # Load Flask
@@ -28,6 +29,9 @@ app.config.update(dict(
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
 
+# ------------------------------------------------------------------------------------------------
+
+# DATABASES
 def connect_db():
     """Connects to the specific database."""
     rv = sqlite.connect(app.config['DATABASE'])
@@ -66,6 +70,9 @@ def close_db(error):
         g.sqlite_db.close()
 
 
+# ------------------------------------------------------------------------------------------------
+
+# ROUTING
 @app.route('/')
 def home():
     db = get_db()
@@ -103,22 +110,29 @@ def login():
             session['logged_in'] = True
             flash('You are logged in')
             return redirect(url_for('entries'))
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error, login=True)
+
+
+class RegistrationForm(Form):
+    username = StringField('Username', [validators.Length(min=1, max=25)])
+    email = StringField('Email Address', [
+        validators.email,
+        validators.Length(min=6, max=35)])
+    password = PasswordField('Password', [validators.Length(min=8, max=128)])
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     error = None
-    if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
-            flash('You were logged in')
-            return redirect(url_for('entries'))
-    return render_template('login.html', error=error, login=True)
+    form = RegistrationForm(request.form)
+    if request.method == 'POST' and form.validate():
+        db = get_db()
+        db.execute('insert into users (username, )', form.username.data, form.email.data,
+                    form.password.data)
+        db_session.add(user)
+        flash('Thanks for registering')
+        return redirect(url_for('login'))
+    return render_template('login.html', error=error, login=False)
 
 
 @app.route('/logout')
