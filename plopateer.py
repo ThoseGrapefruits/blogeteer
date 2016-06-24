@@ -13,7 +13,7 @@
 import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
 from sqlite3 import dbapi2 as sqlite
-from wtforms import Form, BooleanField, StringField, PasswordField, validators
+from wtforms import Form, StringField, PasswordField, validators
 from passlib.hash import pbkdf2_sha256
 
 # Load Flask
@@ -74,20 +74,22 @@ def close_db(error):
 
 # ROUTING
 @app.route('/')
-def home():
+def entries():
     db = get_db()
-    cur = db.execute('select title, author, text, media from entries order by id desc')
+    cur = db.execute('SELECT title, author, content, media FROM entries ORDER BY id DESC')
     entries = cur.fetchall()
     return render_template('entries.html', entries=entries)
 
 
-@app.route('/add', methods=['POST'])
+@app.route('/new', methods=['GET', 'POST'])
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
-    db = get_db()
-    db.execute('insert into entries (title, text) values (?, ?)',
-               [request.form['title'], request.form['text']])
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
+        db = get_db()
+    db.execute('INSERT INTO entries (title, content) VALUES (?, ?)',  # TODO add media
+               [request.form['title'], request.form['content']])
     db.commit()
     flash('New entry was successfully posted')
     return redirect(url_for('entries'))
@@ -96,29 +98,36 @@ def add_entry():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
-    if request.method == 'POST':
-        username = request.form['username']
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
         db = get_db()
-        cur = db.execute('select id, username, passhash from users where username=?', username)
+        cur = db.execute('SELECT id, username, passhash FROM users WHERE username=?',
+                         [request.form['username']])
         entry = cur.fetchone()
 
         if entry is None:
             error = 'Invalid username'
-        elif pbkdf2_sha256.verify(request.form['password'], entry['passhash']):
+        elif not pbkdf2_sha256.verify(request.form['password'], entry['passhash']):
             error = 'Invalid password'
         else:
             session['logged_in'] = True
             flash('You are logged in')
             return redirect(url_for('entries'))
-    return render_template('login.html', error=error, login=True)
+    return render_template('login.html', error=error, dest='login', val='Login', form=form)
 
 
-class RegistrationForm(Form):
-    username = StringField('Username', [validators.Length(min=1, max=25)])
-    email = StringField('Email Address', [
-        validators.email,
-        validators.Length(min=6, max=35)])
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    pass
+
+
+class LoginForm(Form):
+    username = StringField('Username', [validators.Length(min=1, max=32)])
     password = PasswordField('Password', [validators.Length(min=8, max=128)])
+
+
+class RegistrationForm(LoginForm):
+    email = StringField('Email Address', [validators.Email(), validators.Length(min=6, max=128)])
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -127,12 +136,14 @@ def register():
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        db.execute('insert into users (username, )', form.username.data, form.email.data,
-                    form.password.data)
-        db_session.add(user)
+        db.execute('INSERT INTO users (username, email, passhash) VALUES (?, ?, ?)',
+                   (form.username.data, form.email.data,
+                    pbkdf2_sha256.encrypt(form.password.data, rounds=200000, salt_size=16)))
+        db.commit()
+        session['logged_in'] = True
         flash('Thanks for registering')
-        return redirect(url_for('login'))
-    return render_template('login.html', error=error, login=False)
+        return redirect(url_for('entries'))
+    return render_template('login.html', error=error, dest='register', val='Register', form=form)
 
 
 @app.route('/logout')

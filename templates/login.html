@@ -1,20 +1,22 @@
 {% extends 'layout.html' %}
+{% from "_formhelper.html" import render_field %}
 {% block body %}
-    <h2>{% if login %}Login{% else %}Register{% endif %}</h2>
+    <h2>{{ val }}</h2>
     {% if error %}
         <p class="error"><strong>Something went wrong: </strong> {{ error }}
     {% endif %}
 
-    <form action="{{ url_for('login') }}" method="post">
-        <dl>
-            <dt>Username:
-            <dd><input type="text" name="username">
-            <dt>Password:
-            <dd><input type="password" name="password">
-            <dd><input type="submit" value="Login">
-        </dl>
-    </form>
-    {% if login %}
+<form method=post action="{{ url_for(dest) }}">
+  <dl>
+    {{ render_field(form.username) }}
+    {% if dest != 'login' %}
+        {{ render_field(form.email) }}
+    {% endif %}
+    {{ render_field(form.password) }}
+   <input type=submit value={{ val }}>
+  </dl>
+</form>
+    {% if dest == 'login' %}
         <p>No account? <a href="{{ url_for('register') }}" method="post">Register here.</a>
     {% endif %}
 {% endblock %}
