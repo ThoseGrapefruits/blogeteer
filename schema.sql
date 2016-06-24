@@ -12,6 +12,7 @@ create table entries (
 
 create table users (
   id integer primary key autoincrement,
+  passhash text not null,
   username text not null,
   fullname text,
   bio text

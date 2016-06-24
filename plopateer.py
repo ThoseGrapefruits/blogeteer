@@ -11,8 +11,9 @@
     :license: BSDv3, see LICENSE for more details.
 """
 import os
-from flask import Flask, request, g, render_template
-from sqlite3 import dbapi2 as sqlite3
+from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
+from sqlite3 import dbapi2 as sqlite
+from passlib.hash import pbkdf2_sha256
 
 # Load Flask
 app = Flask(__name__)
@@ -22,24 +23,15 @@ app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'plop.db'),
     DEBUG=True,
     SECRET_KEY='development key',
-    USERNAME='admin',
-    PASSWORD='default'
+    REGISTRATION=True
 ))
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
 
-@app.route('/')
-def home():
-    db = get_db()
-    cur = db.execute('select title, text from entries order by id desc')
-    entries = cur.fetchall()
-    return render_template('entries.html', entries=entries)
-
-
 def connect_db():
     """Connects to the specific database."""
-    rv = sqlite3.connect(app.config['DATABASE'])
-    rv.row_factory = sqlite3.Row
+    rv = sqlite.connect(app.config['DATABASE'])
+    rv.row_factory = sqlite.Row
     return rv
 
 
@@ -73,17 +65,67 @@ def close_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
+
+@app.route('/')
+def home():
+    db = get_db()
+    cur = db.execute('select title, author, text, media from entries order by id desc')
+    entries = cur.fetchall()
+    return render_template('entries.html', entries=entries)
+
+
+@app.route('/add', methods=['POST'])
+def add_entry():
+    if not session.get('logged_in'):
+        abort(401)
+    db = get_db()
+    db.execute('insert into entries (title, text) values (?, ?)',
+               [request.form['title'], request.form['text']])
+    db.commit()
+    flash('New entry was successfully posted')
+    return redirect(url_for('entries'))
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
-        pass  # login
-    else:
-        pass  # login form
+        username = request.form['username']
+        db = get_db()
+        cur = db.execute('select id, username, passhash from users where username=?', username)
+        entry = cur.fetchone()
+
+        if entry is None:
+            error = 'Invalid username'
+        elif pbkdf2_sha256.verify(request.form['password'], entry['passhash']):
+            error = 'Invalid password'
+        else:
+            session['logged_in'] = True
+            flash('You are logged in')
+            return redirect(url_for('entries'))
+    return render_template('login.html', error=error)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    error = None
+    if request.method == 'POST':
+        if request.form['username'] != app.config['USERNAME']:
+            error = 'Invalid username'
+        elif request.form['password'] != app.config['PASSWORD']:
+            error = 'Invalid password'
+        else:
+            session['logged_in'] = True
+            flash('You were logged in')
+            return redirect(url_for('entries'))
+    return render_template('login.html', error=error, login=True)
 
 
 @app.route('/logout')
 def logout():
-    pass
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('entries'))
 
 
 @app.route('/post/<int:post_id>')

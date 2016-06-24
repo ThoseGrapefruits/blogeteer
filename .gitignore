@@ -1,3 +1,6 @@
+# Project
+plop.db
+
 # PyCharm
 .idea
 
@@ -12,6 +15,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
+.venv
 build/
 develop-eggs/
 dist/
