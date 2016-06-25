@@ -5,7 +5,7 @@ create table entries (
   id integer primary key autoincrement,
   title text not null,
   author integer not null,
-  content text not null,
+  body text not null,
   media text, -- link or path to media / photo gallery
   foreign key(author) references users(id)
 );
