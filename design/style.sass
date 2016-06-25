@@ -1,0 +1,55 @@
+// Fonts
+$deco-font-stack: 'Cormorant Unicase', Serif
+$para-font-stack: 'Cormorant Garamond', Serif
+
+// Colours
+$faded-violet: #E1D4D6
+$trans-faded-violet: rgba($faded-violet, 0.2)
+$dark-grey: #333333
+$mid-grey: #595959
+$light-grey: #CCCCCC
+$off-white: #EBEBEB
+
+body
+  font: 1em $para-font-stack
+  color: $off-whitet
+  background: $dark-grey
+
+h1, h2
+  font: 3em $deco-font-stack
+  display: inline-block
+
+h1:before, h2:before
+  content: ''
+  background: none
+  display: block
+  margin-bottom: -0.4em
+  border-bottom: 0.2em solid $trans-faded-violet
+  transition: border-top 0.1s
+
+a, h1, h2
+  color: $faded-violet
+
+a
+  display: inline-block
+  text-decoration: none
+  margin-bottom: 1em
+
+a:after
+  content: ''
+  background: none
+  display: block
+  margin-top: 0
+  border-top: 0.2em solid $trans-faded-violet
+  transition: border-top 0.2s
+
+a:hover:after
+  border-top-width: 0.4em
+  margin-top: -0.2em
+  transition: margin-top 0.1s
+
+.page
+  margin: 2em auto
+  max-width: 35em
+  padding: 0.8em
+  background: $dark-grey
