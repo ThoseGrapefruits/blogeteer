@@ -1,16 +1,19 @@
 <!DOCTYPE html>
-<link href="https://fonts.googleapis.com/css?family=Cormorant|Cormorant+SC" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Cormorant|Cormorant+Unicase" rel="stylesheet">
 <title>plopateer</title>
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 <div class="page">
-    <h1>Plopateer</h1>
-    <div class="nav">
-        {% if not session.logged_in %}
-            <a href="{{ url_for('login') }}">log in</a>
-        {% else %}
-            <a href="{{ url_for('add_entry') }}">add new entry</a>
-            <a href="{{ url_for('logout') }}">log out</a>
-        {% endif %}
+    <div class="top">
+        <h1><a href="{{ url_for('home') }}">Plopateer</a></h1>
+        <div class="nav">
+            {% if not session.logged_in %}
+                <a href="{{ url_for('login') }}">log in</a>
+                <a href="{{ url_for('register') }}">register</a>
+            {% else %}
+                <a href="{{ url_for('add_entry') }}">add new entry</a>
+                <a href="{{ url_for('logout') }}">log out</a>
+            {% endif %}
+        </div>
     </div>
     {% block body %} {% endblock %}
 </div>

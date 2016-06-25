@@ -1,55 +1,202 @@
 // Fonts
-$deco-font-stack: 'Cormorant Unicase', Serif
-$para-font-stack: 'Cormorant Garamond', Serif
+$deco-font-stack: 'Cormorant Unicase', serif
+$para-font-stack: 'Cormorant', serif
 
 // Colours
-$faded-violet: #E1D4D6
-$trans-faded-violet: rgba($faded-violet, 0.2)
+$faded-violet: #e1b4b6
+// $faded-violet: #e1d4d6
+$trans2-faded-violet: rgba($faded-violet, 0.2)
+$trans4-faded-violet: rgba($faded-violet, 0.4)
+$trans6-faded-violet: rgba($faded-violet, 0.6)
+$trans8-faded-violet: rgba($faded-violet, 0.8)
 $dark-grey: #333333
 $mid-grey: #595959
-$light-grey: #CCCCCC
-$off-white: #EBEBEB
+$light-grey: #cccccc
+$off-white: #ebebeb
+
+// Spacing
+$space-s: 0.2em
+$space-m: 0.4em
+$space-l: 1em
+
+// Timing
+$delay-s: 200ms
+
+
+// ----------------------------------------------------------------------------
+
+// FUNCTIONS
+
+@mixin box-shadow($shadows...)
+  -moz-box-shadow: $shadows
+  -webkit-box-shadow: $shadows
+  box-shadow: $shadows
+
+
+// ----------------------------------------------------------------------------
+
+// BODY + HEADERS
 
 body
   font: 1em $para-font-stack
-  color: $off-whitet
+  color: $off-white
   background: $dark-grey
 
 h1, h2
-  font: 3em $deco-font-stack
+  font-family: $deco-font-stack
+  font-weight: 400
+  font-size: 3em
   display: inline-block
+  margin-bottom: 0
 
-h1:before, h2:before
+h2
+  font-size: 2em
+
+h3
+  font-size: 2em
+
+h4
+  font-size: 1.6em
+a, h1, h2
+  color: $off-white
+
+.top h1
+  margin-top: 0
+  color: $faded-violet
+
+  a
+    display: inline-block
+    text-decoration: none
+    margin-bottom: $space-l
+    padding: $space-s
+    color: $faded-violet
+
+    &:after
+      border-top: none
+
+    &:hover
+      background: none
+
+// Old header decorations
+//.top:after, .top:after
   content: ''
   background: none
   display: block
-  margin-bottom: -0.4em
-  border-bottom: 0.2em solid $trans-faded-violet
-  transition: border-top 0.1s
+  margin-bottom: -$s-m
+  border-bottom: $s-m solid $trans-faded-violet
 
-a, h1, h2
-  color: $faded-violet
+// h1:before, h2:before
+  content: ''
+  background: none
+  display: block
+  margin-bottom: -$s-m
+  border-bottom: $s-s solid $trans-faded-violet
 
+
+// ----------------------------------------------------------------------------
+
+// LINKS
 a
   display: inline-block
   text-decoration: none
-  margin-bottom: 1em
+  margin-bottom: $space-l
+  padding: $space-s
 
-a:after
-  content: ''
+  &:after
+    content: ''
+    background: none
+    display: block
+    margin-top: 0
+    border-top: $space-s solid $trans2-faded-violet
+    transition: background $delay-s
+
+  &:hover
+    background-color: $trans2-faded-violet
+    transition: background $delay-s
+
+i, cite, em, var, address, dfn
+  font-style: normal
+
+  &:before, &:after
+    content: '/'
+    color: $faded-violet
+    padding: 0 0.1em
+
+// ----------------------------------------------------------------------------
+
+// FORMS
+
+dt
+  display: inline-block
+  vertical-align: top
+  width: 7em
+  margin: $space-m 0
+
+dd
+  vertical-align: top
+  display: inline-block
+  margin-left: 0
+
+form dl div
+  margin: $space-s $space-s $space-s $space-l
+
+form
+  margin: $space-l $space-l $space-l 0
+
+input
+  padding: $space-m
   background: none
-  display: block
-  margin-top: 0
-  border-top: 0.2em solid $trans-faded-violet
-  transition: border-top 0.2s
+  color: $faded-violet
+  font-family: $para-font-stack
+  font-size: 1em
+  border: none
+  border-bottom: $space-s solid $trans6-faded-violet
 
-a:hover:after
-  border-top-width: 0.4em
-  margin-top: -0.2em
-  transition: margin-top 0.1s
+input:focus, textarea:focus
+  outline: none
+
+input[type="submit"]
+  font-family: $deco-font-stack
+
+  &:after
+    content: ''
+    background: none
+    display: block
+    margin-top: 0
+    border-top: $space-s solid $trans2-faded-violet
+    transition: background-color $delay-s
+
+  &:hover
+    cursor: pointer
+    background-color: $trans2-faded-violet
+    transition: background-color $delay-s
+
+
+// ----------------------------------------------------------------------------
+
+// CLASSES
 
 .page
   margin: 2em auto
   max-width: 35em
-  padding: 0.8em
-  background: $dark-grey
+  padding: 1em
+
+.nav
+  display: flex
+  float: right
+
+.nav a
+  margin: 0 $space-s
+  color: $faded-violet
+
+.entries
+  list-style: none
+  margin: 0
+  padding: 0
+
+.entries li
+  margin: $space-m $space-l
+
+.entries li h2
+  margin-left: -$space-l
+

@@ -74,7 +74,7 @@ def close_db(error):
 
 # ROUTING
 @app.route('/')
-def entries():
+def home():
     db = get_db()
     cur = db.execute('SELECT title, author, content, media FROM entries ORDER BY id DESC')
     entries = cur.fetchall()
