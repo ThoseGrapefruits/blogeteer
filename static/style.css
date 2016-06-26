@@ -1,12 +1,10 @@
 body {
-  font: 1em "Cormorant", serif;
+  font: 400 1em "Cormorant", serif;
   color: #ebebeb;
   background: #333333; }
 
 h1, h2 {
-  font-family: "Cormorant Unicase", serif;
-  font-weight: 400;
-  font-size: 3em;
+  font-family: 400 3em "Cormorant Unicase", serif;
   display: inline-block;
   margin-bottom: 0; }
 
