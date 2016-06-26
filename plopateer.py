@@ -14,6 +14,7 @@ import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
 from sqlite3 import dbapi2 as sqlite
 from wtforms import Form, StringField, PasswordField, validators
+# noinspection PyUnresolvedReferences
 from passlib.hash import pbkdf2_sha256
 
 # Load Flask
@@ -88,10 +89,10 @@ def add_entry():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-    db.execute('INSERT INTO entries (title, content) VALUES (?, ?)',  # TODO add media
-               [request.form['title'], request.form['content']])
-    db.commit()
-    flash('New entry was successfully posted')
+        db.execute('INSERT INTO entries (title, content) VALUES (?, ?)',  # TODO add media
+                   [request.form['title'], request.form['content']])
+        db.commit()
+        flash('New entry was successfully posted')
     return redirect(url_for('entries'))
 
 
