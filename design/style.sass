@@ -1,14 +1,18 @@
+// VARIABLES
+
 // Fonts
 $deco-font-stack: 'Cormorant Unicase', serif
 $para-font-stack: 'Cormorant', serif
 
 // Colours
-$faded-violet: #e1b4b6
-// $faded-violet: #e1d4d6
-$trans2-faded-violet: rgba($faded-violet, 0.2)
-$trans4-faded-violet: rgba($faded-violet, 0.4)
-$trans6-faded-violet: rgba($faded-violet, 0.6)
-$trans8-faded-violet: rgba($faded-violet, 0.8)
+$faded-plum: #e1b4b6 // #e1d4d6
+$plum: #3f1e30
+
+$trans2-faded-plum: rgba($faded-plum, 0.2)
+$trans4-faded-plum: rgba($faded-plum, 0.4)
+$trans6-faded-plum: rgba($faded-plum, 0.6)
+$trans8-faded-plum: rgba($faded-plum, 0.8)
+
 $dark-grey: #333333
 $mid-grey: #595959
 $light-grey: #cccccc
@@ -20,7 +24,9 @@ $space-m: 0.4em
 $space-l: 1em
 
 // Timing
-$delay-s: 200ms
+$delay-s: 100ms
+$delay-m: 200ms
+$delay-l: 400ms
 
 
 // ----------------------------------------------------------------------------
@@ -62,14 +68,14 @@ a, h1, h2
 
 .top h1
   margin-top: 0
-  color: $faded-violet
+  color: $faded-plum
 
   a
     display: inline-block
     text-decoration: none
     margin-bottom: $space-l
     padding: $space-s
-    color: $faded-violet
+    color: $faded-plum
 
     &:after
       border-top: none
@@ -83,14 +89,14 @@ a, h1, h2
   background: none
   display: block
   margin-bottom: -$s-m
-  border-bottom: $s-m solid $trans-faded-violet
+  border-bottom: $s-m solid $trans-faded-plum
 
 // h1:before, h2:before
   content: ''
   background: none
   display: block
   margin-bottom: -$s-m
-  border-bottom: $s-s solid $trans-faded-violet
+  border-bottom: $s-s solid $trans-faded-plum
 
 
 // ----------------------------------------------------------------------------
@@ -107,19 +113,19 @@ a
     background: none
     display: block
     margin-top: 0
-    border-top: $space-s solid $trans2-faded-violet
-    transition: background $delay-s
+    border-top: $space-s solid $trans2-faded-plum
+    transition: background $delay-m
 
   &:hover
-    background-color: $trans2-faded-violet
-    transition: background $delay-s
+    background-color: $trans2-faded-plum
+    transition: background $delay-m
 
 i, cite, em, var, address, dfn
   font-style: normal
 
   &:before, &:after
     content: '/'
-    color: $faded-violet
+    color: $faded-plum
     padding: 0 0.1em
 
 // ----------------------------------------------------------------------------
@@ -146,11 +152,11 @@ form
 input
   padding: $space-m
   background: none
-  color: $faded-violet
+  color: $faded-plum
   font-family: $para-font-stack
   font-size: 1em
   border: none
-  border-bottom: $space-s solid $trans6-faded-violet
+  border-bottom: $space-s solid $trans6-faded-plum
 
 input:focus, textarea:focus
   outline: none
@@ -163,13 +169,13 @@ input[type="submit"]
     background: none
     display: block
     margin-top: 0
-    border-top: $space-s solid $trans2-faded-violet
-    transition: background-color $delay-s
+    border-top: $space-s solid $trans2-faded-plum
+    transition: background-color $delay-m
 
   &:hover
     cursor: pointer
-    background-color: $trans2-faded-violet
-    transition: background-color $delay-s
+    background-color: $trans2-faded-plum
+    transition: background-color $delay-m
 
 
 // ----------------------------------------------------------------------------
@@ -187,7 +193,7 @@ input[type="submit"]
 
 .nav a
   margin: 0 $space-s
-  color: $faded-violet
+  color: $faded-plum
 
 .entries
   list-style: none
