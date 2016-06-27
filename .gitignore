@@ -6,6 +6,7 @@ plop.db
 
 # Web
 .sass-cache
+*.map
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
