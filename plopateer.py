@@ -16,6 +16,8 @@ from sqlite3 import dbapi2 as sqlite
 from wtforms import Form, StringField, PasswordField, validators
 # noinspection PyUnresolvedReferences
 from passlib.hash import pbkdf2_sha256
+from werkzeug.utils import secure_filename
+import datetime;
 
 # Load Flask
 app = Flask(__name__)
@@ -25,7 +27,9 @@ app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'plop.db'),
     DEBUG=True,
     SECRET_KEY='development key',
-    REGISTRATION=True
+    REGISTRATION=True,
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'},
+    UPLOAD_DIR = os.path.join(app.root_path, 'media')
 ))
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
@@ -83,7 +87,7 @@ def home():
 
 
 @app.route('/new', methods=['GET', 'POST'])
-def add_entry():
+def new():
     if not session.get('logged_in'):
         abort(401)
     form = LoginForm(request.form)
@@ -93,7 +97,7 @@ def add_entry():
                    [request.form['title'], request.form['content']])
         db.commit()
         flash('New entry was successfully posted')
-    return redirect(url_for('entries'))
+    return redirect(url_for('home'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -173,6 +177,36 @@ def profile_by_id(user_id):
 @app.route('/user/<username>')
 def profile(username):
     return 'User {}'.format(username)
+
+
+# ------------------------------------------------------------------------------------------------
+
+# FILE PROCESSING
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
+
+
+def save_dir():
+    timetuple = datetime.datetime.now().utctimetuple()
+
+    path = os.path.join(app.config['UPLOAD_DIR'], timetuple[0:3])
+
+    os.makedirs(path, mode=0o770, exist_ok=True)
+
+    return path
+
+
+def save_paths(*filenames):
+    base_dir = save_dir()
+    for filename in filenames:
+        yield os.path.join(base_dir, secure_filename(filename))
+
+
+# ------------------------------------------------------------------------------------------------
+
+# MAIN
 
 
 if __name__ == '__main__':
