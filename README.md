@@ -1,9 +1,8 @@
-```
-    plopateer /// minimal photo
-              /// and project-based
-              /// blogosphere plopper
-                            with an emphasis on looking fabulous ///
+# Plopateer
+> minimal photo and project-based blogosphere plopper with an emphasis on looking fabulous
 
-    pronounciation: plop + (musketeer - musk)
+#### Pronounciation
+`plop + (musketeer - musk)`
 
-```
+##Usage
+ `./runserver initdb`

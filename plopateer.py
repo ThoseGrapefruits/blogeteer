@@ -81,7 +81,7 @@ def close_db(error):
 @app.route('/')
 def home():
     db = get_db()
-    cur = db.execute('SELECT title, author, content, media FROM entries ORDER BY id DESC')
+    cur = db.execute('SELECT title, author, body, media FROM entries ORDER BY id DESC')
     entries = cur.fetchall()
     return render_template('entries.html', entries=entries)
 
@@ -90,14 +90,15 @@ def home():
 def new():
     if not session.get('logged_in'):
         abort(401)
-    form = LoginForm(request.form)
+    form = EntryForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        db.execute('INSERT INTO entries (title, content) VALUES (?, ?)',  # TODO add media
-                   [request.form['title'], request.form['content']])
+        db.execute('INSERT INTO entries (title, body) VALUES (?, ?)',  # TODO add media
+                   (request.form['title'], request.form['body']))
         db.commit()
         flash('New entry was successfully posted')
-    return redirect(url_for('home'))
+        return redirect(url_for('home'))
+    return render_template('add_entry.html', dest='login', val='Login', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -107,7 +108,7 @@ def login():
     if request.method == 'POST' and form.validate():
         db = get_db()
         cur = db.execute('SELECT id, username, passhash FROM users WHERE username=?',
-                         [request.form['username']])
+                         (request.form['username'],))
         entry = cur.fetchone()
 
         if entry is None:
@@ -117,22 +118,13 @@ def login():
         else:
             session['logged_in'] = True
             flash('You are logged in')
-            return redirect(url_for('entries'))
+            return redirect(url_for('home'))
     return render_template('login.html', error=error, dest='login', val='Login', form=form)
 
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
-    pass
-
-
-class LoginForm(Form):
-    username = StringField('Username', [validators.Length(min=1, max=32)])
-    password = PasswordField('Password', [validators.Length(min=8, max=128)])
-
-
-class RegistrationForm(LoginForm):
-    email = StringField('Email Address', [validators.Email(), validators.Length(min=6, max=128)])
+    pass # TODO
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -147,7 +139,7 @@ def register():
         db.commit()
         session['logged_in'] = True
         flash('Thanks for registering')
-        return redirect(url_for('entries'))
+        return redirect(url_for('home'))
     return render_template('login.html', error=error, dest='register', val='Register', form=form)
 
 
@@ -155,28 +147,47 @@ def register():
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
-    return redirect(url_for('entries'))
+    return redirect(url_for('home'))
 
 
 @app.route('/post/<int:post_id>')
 def post_by_id(post_id):
-    return 'Post #{}'.format(post_id)
+    return 'Post #{}'.format(post_id) # TODO
 
 
 @app.route('/post/<post_name>')
 def post_by_name(post_name):
     # NOTE: prefix posts with number-only titles
-    return 'Post {}'.format(post_name)
+    return 'Post {}'.format(post_name) # TODO
 
 
 @app.route('/user/<int:user_id>')
 def profile_by_id(user_id):
-    return 'User #{}'.format(user_id)
+    db = get_db()
+    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id)).fetchone()
+    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] else entry['username']
+    return render_template('entry.html', title=name, body=entry['bio'])
 
 
 @app.route('/user/<username>')
 def profile(username):
-    return 'User {}'.format(username)
+    return 'User {}'.format(username) # TODO
+
+
+# FORMS
+
+class LoginForm(Form):
+    username = StringField('Username', (validators.Length(min=1, max=32),))
+    password = PasswordField('Password', (validators.Length(min=8, max=128),))
+
+
+class RegistrationForm(LoginForm):
+    email = StringField('Email Address', (validators.Email(), validators.Length(min=6, max=128)))
+
+
+class EntryForm(Form):
+    title = StringField('Title', (validators.InputRequired(), validators.Length(max=128)))
+    body = StringField('Body', (validators.Length(max=1000000),))
 
 
 # ------------------------------------------------------------------------------------------------
