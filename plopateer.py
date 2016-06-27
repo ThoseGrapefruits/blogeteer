@@ -78,6 +78,7 @@ def close_db(error):
 # ------------------------------------------------------------------------------------------------
 
 # ROUTING
+
 @app.route('/')
 def home():
     db = get_db()
@@ -151,12 +152,14 @@ def logout():
 
 
 @app.route('/post/<int:post_id>')
-def post_by_id(post_id):
-    return 'Post #{}'.format(post_id) # TODO
+def entry_by_id(post_id):
+    db = get_db()
+    entry = db.execute('select title, author, body, media from entries where id=?', str(post_id)).fetchone()
+    return render_template('entry.html', title=entry['title'], body=entry['body'])
 
 
 @app.route('/post/<post_name>')
-def post_by_name(post_name):
+def entry_by_name(post_name):
     # NOTE: prefix posts with number-only titles
     return 'Post {}'.format(post_name) # TODO
 
@@ -171,8 +174,13 @@ def profile_by_id(user_id):
 
 @app.route('/user/<username>')
 def profile(username):
-    return 'User {}'.format(username) # TODO
+    db = get_db()
+    entry = db.execute('select username, fullname, bio from users where username=?', username).fetchone()
+    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] else entry['username']
+    return render_template('entry.html', title=name, body=entry['bio'])
 
+
+# ------------------------------------------------------------------------------------------------
 
 # FORMS
 
