@@ -5,4 +5,5 @@
 `plop + (musketeer - musk)`
 
 ##Usage
- `./runserver initdb`
+- `./runserver initdb` the first time, to initialise the database.
+- `./runserver` after that
