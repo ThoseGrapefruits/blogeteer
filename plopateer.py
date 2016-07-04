@@ -13,11 +13,12 @@
 import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
 from sqlite3 import dbapi2 as sqlite
-from wtforms import Form, StringField, PasswordField, validators
+from wtforms import Form, StringField, PasswordField, FileField, validators
 # noinspection PyUnresolvedReferences
 from passlib.hash import pbkdf2_sha256
 from werkzeug.utils import secure_filename
-import datetime;
+import datetime
+from PIL import Image
 
 # Load Flask
 app = Flask(__name__)
@@ -29,7 +30,7 @@ app.config.update(dict(
     SECRET_KEY='development key',
     REGISTRATION=True,
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'},
-    UPLOAD_DIR = os.path.join(app.root_path, 'media')
+    UPLOAD_DIR=os.path.join(app.root_path, 'media')
 ))
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
@@ -99,7 +100,7 @@ def new():
         db.commit()
         flash('New entry was successfully posted')
         return redirect(url_for('home'))
-    return render_template('add_entry.html', dest='login', val='Login', form=form)
+    return render_template('new.html', dest='login', val='Login', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -154,7 +155,8 @@ def logout():
 @app.route('/post/<int:post_id>')
 def entry_by_id(post_id):
     db = get_db()
-    entry = db.execute('select title, author, body, media from entries where id=?', str(post_id)).fetchone()
+    entry = db.execute('select title, author, body, media from entries where id=?', str(post_id))\
+        .fetchone()
     return render_template('entry.html', title=entry['title'], body=entry['body'])
 
 
@@ -167,16 +169,20 @@ def entry_by_name(post_name):
 @app.route('/user/<int:user_id>')
 def profile_by_id(user_id):
     db = get_db()
-    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id)).fetchone()
-    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] else entry['username']
+    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id))\
+              .fetchone()
+    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname']\
+        else entry['username']
     return render_template('entry.html', title=name, body=entry['bio'])
 
 
 @app.route('/user/<username>')
 def profile(username):
     db = get_db()
-    entry = db.execute('select username, fullname, bio from users where username=?', username).fetchone()
-    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] else entry['username']
+    entry = db.execute('select username, fullname, bio from users where username=?', username)\
+              .fetchone()
+    name = '{} ({})'.format(entry['fullname'], entry['username'])\
+        if entry['fullname'] else entry['username']
     return render_template('entry.html', title=name, body=entry['bio'])
 
 
@@ -195,8 +201,14 @@ class RegistrationForm(LoginForm):
 
 class EntryForm(Form):
     title = StringField('Title', (validators.InputRequired(), validators.Length(max=128)))
-    body = StringField('Body', (validators.Length(max=1000000),))
 
+
+class MediaEntryForm(EntryForm):
+    files = FileField(u'Image File(s)', (validators.regexp(u'^[^/\\]+\.jpg$'),))
+
+
+class TextEntryForm(EntryForm):
+    body = StringField('Body', (validators.Length(max=1000000),))
 
 # ------------------------------------------------------------------------------------------------
 
@@ -221,6 +233,27 @@ def save_paths(*filenames):
     base_dir = save_dir()
     for filename in filenames:
         yield os.path.join(base_dir, secure_filename(filename))
+
+
+class SubImage:
+    size = 2048, 2048
+    suffix = 'small'
+
+    def get_sub_path(self, file_path):
+        splitext = os.path.splitext(file_path)
+        return '{}{}.{}x{}.{}'.format(os.path.dirname(), splitext[0], self.size[0], self.size[1], splitext[1])
+
+    def resize(self, file_path):
+        out_file = self.get_sub_path(file_path)
+        if file_path != out_file:
+            try:
+                image = Image.open(file_path)
+                image.thumbnail(self.size)
+                image.save(out_file)
+            except IOError:
+                message = "Cannot create thumbnail for {}".format(os.path.basename(file_path))
+                flash(message)
+                print(message)
 
 
 # ------------------------------------------------------------------------------------------------
