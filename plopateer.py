@@ -10,15 +10,19 @@
     :copyright: (c) 2016 by Logan Moore.
     :license: BSDv3, see LICENSE for more details.
 """
+from sqlite3 import dbapi2 as sqlite
+
 import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
-from sqlite3 import dbapi2 as sqlite
-from wtforms import Form, StringField, PasswordField, FileField, validators
+from wtforms import StringField, PasswordField, FileField, validators, RadioField, TextAreaField
+from flask_wtf import Form
+
 # noinspection PyUnresolvedReferences
 from passlib.hash import pbkdf2_sha256
 from werkzeug.utils import secure_filename
 import datetime
 from PIL import Image
+import re
 
 # Load Flask
 app = Flask(__name__)
@@ -29,8 +33,10 @@ app.config.update(dict(
     DEBUG=True,
     SECRET_KEY='development key',
     REGISTRATION=True,
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'},
-    UPLOAD_DIR=os.path.join(app.root_path, 'media')
+    ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg', 'gif'},
+    UPLOAD_DIR=os.path.join(app.root_path, 'media'),
+    REGEXP={'username': re.compile(r'^([A-Za-z\d]+)$'),
+            'filename': re.compile(r'^[^/\\]+\.jpg$')}
 ))
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
@@ -83,7 +89,7 @@ def close_db(error):
 @app.route('/')
 def home():
     db = get_db()
-    cur = db.execute('SELECT title, author, body, media FROM entries ORDER BY id DESC')
+    cur = db.execute('select title, author, body, media from entries order by id desc')
     entries = cur.fetchall()
     return render_template('entries.html', entries=entries)
 
@@ -95,12 +101,12 @@ def new():
     form = EntryForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        db.execute('INSERT INTO entries (title, body) VALUES (?, ?)',  # TODO add media
+        db.execute('insert into entries (title, body) values (?, ?)',
                    (request.form['title'], request.form['body']))
         db.commit()
         flash('New entry was successfully posted')
         return redirect(url_for('home'))
-    return render_template('new.html', dest='login', val='Login', form=form)
+    return render_template('new.html', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -109,7 +115,7 @@ def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        cur = db.execute('SELECT id, username, passhash FROM users WHERE username=?',
+        cur = db.execute('select id, username, passhash from users where username=?',
                          (request.form['username'],))
         entry = cur.fetchone()
 
@@ -126,7 +132,7 @@ def login():
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
-    pass # TODO
+    pass  # TODO
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -135,7 +141,7 @@ def register():
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        db.execute('INSERT INTO users (username, email, passhash) VALUES (?, ?, ?)',
+        db.execute('insert into users (username, email, passhash) values (?, ?, ?)',
                    (form.username.data, form.email.data,
                     pbkdf2_sha256.encrypt(form.password.data, rounds=200000, salt_size=16)))
         db.commit()
@@ -155,7 +161,7 @@ def logout():
 @app.route('/post/<int:post_id>')
 def entry_by_id(post_id):
     db = get_db()
-    entry = db.execute('select title, author, body, media from entries where id=?', str(post_id))\
+    entry = db.execute('select title, author, body, media from entries where id=?', str(post_id)) \
         .fetchone()
     return render_template('entry.html', title=entry['title'], body=entry['body'])
 
@@ -163,15 +169,15 @@ def entry_by_id(post_id):
 @app.route('/post/<post_name>')
 def entry_by_name(post_name):
     # NOTE: prefix posts with number-only titles
-    return 'Post {}'.format(post_name) # TODO
+    return 'Post {}'.format(post_name)  # TODO
 
 
 @app.route('/user/<int:user_id>')
 def profile_by_id(user_id):
     db = get_db()
-    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id))\
-              .fetchone()
-    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname']\
+    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id)) \
+        .fetchone()
+    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] \
         else entry['username']
     return render_template('entry.html', title=name, body=entry['bio'])
 
@@ -179,9 +185,9 @@ def profile_by_id(user_id):
 @app.route('/user/<username>')
 def profile(username):
     db = get_db()
-    entry = db.execute('select username, fullname, bio from users where username=?', username)\
-              .fetchone()
-    name = '{} ({})'.format(entry['fullname'], entry['username'])\
+    entry = db.execute('select username, fullname, bio from users where username=?', username) \
+        .fetchone()
+    name = '{} ({})'.format(entry['fullname'], entry['username']) \
         if entry['fullname'] else entry['username']
     return render_template('entry.html', title=name, body=entry['bio'])
 
@@ -191,7 +197,8 @@ def profile(username):
 # FORMS
 
 class LoginForm(Form):
-    username = StringField('Username', (validators.Length(min=1, max=32),))
+    username = StringField('Username', (validators.Length(min=1, max=32),
+                                        validators.regexp(r'^([A-Za-z0-9]+)$')))
     password = PasswordField('Password', (validators.Length(min=8, max=128),))
 
 
@@ -200,15 +207,35 @@ class RegistrationForm(LoginForm):
 
 
 class EntryForm(Form):
+    """Base form for entries of all kinds"""
     title = StringField('Title', (validators.InputRequired(), validators.Length(max=128)))
+    radio = RadioField('Label', choices=[('value', 'description'), ('value_two', 'whatever')])
+    files = FileField(u'Image File(s)', (validators.regexp(app.config['REGEXP']['filename']),),
+                      render_kw={'multiple': True})
+    body = TextAreaField('Body', (validators.Length(max=1000000),),
+                         render_kw={'cols': 35, 'rows': 20})
 
 
 class MediaEntryForm(EntryForm):
-    files = FileField(u'Image File(s)', (validators.regexp(u'^[^/\\]+\.jpg$'),))
+    """Form for entries containing media (media galleries, pictures, etc)"""
 
 
 class TextEntryForm(EntryForm):
-    body = StringField('Body', (validators.Length(max=1000000),))
+    """Form for text-only entries"""
+
+
+def canonicalize(username):
+    """
+    Canonicalize the given username. Given the requirements on usernames to be alphanumeric, this
+    will only put the username to lowercase in practice.
+
+    :param username:
+    :type   username: str
+    :return:
+    """
+    if re.match(app.config['REGEXP']['username'], username):
+        return username.lower()
+
 
 # ------------------------------------------------------------------------------------------------
 
@@ -241,7 +268,8 @@ class SubImage:
 
     def get_sub_path(self, file_path):
         splitext = os.path.splitext(file_path)
-        return '{}{}.{}x{}.{}'.format(os.path.dirname(), splitext[0], self.size[0], self.size[1], splitext[1])
+        return '{}{}.{}x{}.{}'.format(os.path.dirname(), splitext[0],
+                                      self.size[0], self.size[1], splitext[1])
 
     def resize(self, file_path):
         out_file = self.get_sub_path(file_path)
@@ -254,6 +282,26 @@ class SubImage:
                 message = "Cannot create thumbnail for {}".format(os.path.basename(file_path))
                 flash(message)
                 print(message)
+
+
+class SubSubImage(SubImage):
+    size = 1024, 1024
+    suffix = 'verysmall'
+
+
+class TinyImage(SubImage):
+    size = 512, 512
+    suffix = 'tiny'
+
+
+class TinyTinyImage(SubImage):
+    size = 256, 256
+    suffix = 'verytiny'
+
+
+class ThumbnailImage(SubImage):
+    size = 128, 128
+    suffix = 'thumb'
 
 
 # ------------------------------------------------------------------------------------------------
