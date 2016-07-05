@@ -3,8 +3,7 @@ drop table if exists entries;
 drop table if exists media;
 
 create table users (
-  id       integer primary key autoincrement,
-  username text not null,
+  username text primary key,
   email    text not null,
   passhash text not null,
   fullname text,
