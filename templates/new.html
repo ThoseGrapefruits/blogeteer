@@ -10,7 +10,7 @@
         <dl>
             {{ render_field(form.title) }}
             {{ render_field(form.body) }}
-            <dd><input type="file" name="Files" multiple>
+            {{ render_field(form.files) }}
             <dd><input type="submit" value="Submit">
         </dl>
     </form>
