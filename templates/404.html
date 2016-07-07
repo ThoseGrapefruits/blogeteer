@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>404</h2>
+    {% if title %}
+        <h4>{{ title }}</h4>
+    {% endif %}
+    {% if message %}
+        <p>{{ message }}
+    {% endif %}
+
+{% endblock %}

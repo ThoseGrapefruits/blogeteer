@@ -44,6 +44,7 @@ app.config.from_envvar('PLOP_SETTINGS', silent=True)
 # ------------------------------------------------------------------------------------------------
 
 # DATABASES
+
 def connect_db():
     """Connects to the specific database."""
     rv = sqlite.connect(app.config['DATABASE'])
@@ -172,21 +173,20 @@ def entry_by_name(post_name):
     return 'Post {}'.format(post_name)  # TODO
 
 
-@app.route('/user/<int:user_id>')
-def profile_by_id(user_id):
-    db = get_db()
-    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id)) \
-        .fetchone()
-    name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] \
-        else entry['username']
-    return render_template('entry.html', title=name, body=entry['bio'])
+@app.route('/404')
+def not_found(title, message):
+    return render_template('404.html', title=title, message=message)
 
 
-@app.route('/user/<username>')
+@app.route('/user/<string:username>')
 def profile(username):
     db = get_db()
     entry = db.execute('select username, fullname, bio from users where username=?', username) \
         .fetchone()
+
+    if entry is None:
+        return render_template('404.html', title='User not found.')
+
     name = '{} ({})'.format(entry['fullname'], entry['username']) \
         if entry['fullname'] else entry['username']
     return render_template('entry.html', title=name, body=entry['bio'])
@@ -241,7 +241,6 @@ def canonicalize(username):
 
 # FILE PROCESSING
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
@@ -262,9 +261,14 @@ def save_paths(*filenames):
         yield os.path.join(base_dir, secure_filename(filename))
 
 
+# ------------------------------------------------------------------------------------------------
+
+# IMAGE PROCESSING
+
 class SubImage:
     size = 2048, 2048
     suffix = 'small'
+    square = False
 
     def get_sub_path(self, file_path):
         splitext = os.path.splitext(file_path)
@@ -276,6 +280,24 @@ class SubImage:
         if file_path != out_file:
             try:
                 image = Image.open(file_path)
+                try:
+                    image.verify()
+                except IOError:
+                    print('Image could not be read.')
+
+                if self.square:  # Crop image into centred square
+                    (width, height) = image.size()
+                    (left, upper, right, lower) = (0, height, width, 0)
+                    if width < height:
+                        diff = (height - width) / 2
+                        upper = height - diff
+                        lower = diff
+                    elif width > height:
+                        diff = (width - height) / 2
+                        left = diff
+                        right = width - diff
+                    image.crop(left, upper, right, lower)
+
                 image.thumbnail(self.size)
                 image.save(out_file)
             except IOError:
@@ -297,11 +319,13 @@ class TinyImage(SubImage):
 class TinyTinyImage(SubImage):
     size = 256, 256
     suffix = 'verytiny'
+    square = True
 
 
 class ThumbnailImage(SubImage):
     size = 128, 128
     suffix = 'thumb'
+    square = True
 
 
 # ------------------------------------------------------------------------------------------------

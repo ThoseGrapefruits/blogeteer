@@ -11,7 +11,7 @@ create table users (
 );
 
 create table entries (
-  id      integer primary key autoincrement,
+  slug    text primary key,
   title   text not null,
   author  integer not null,
   body text not null,
