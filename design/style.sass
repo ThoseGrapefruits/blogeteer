@@ -134,12 +134,13 @@ dt
   display: inline-block
   vertical-align: top
   width: 7em
-  margin: $space-m 0
+  margin-bottom: $space-l
 
 dd
   vertical-align: top
   display: inline-block
   margin-left: 0
+  margin-bottom: $space-l
 
 form dl div
   margin: $space-s $space-s $space-s $space-l
@@ -147,17 +148,27 @@ form dl div
 form
   margin: $space-l $space-l $space-l 0
 
-input
+input[type='text'], textarea
   padding: $space-m
   background: none
   color: $faded-plum
   font-family: $para-font-stack
   font-size: 1em
   border: none
-  border-bottom: $space-s solid $trans6-faded-plum
+  margin-top: 0
+  margin-bottom: $space-l
   &:-webkit-autofill
     -webkit-box-shadow: 0 0 0 1000em $dark-grey inset
     -webkit-text-fill-color: $faded-plum !important
+
+input[type='text']
+  border-bottom: $space-s solid $trans6-faded-plum
+
+textarea
+  background: none
+  padding: $space-l
+  border-left: $space-s solid $trans6-faded-plum
+  //border-right: $space-s solid $trans6-faded-plum
 
 input:focus, textarea:focus
   outline: none
