@@ -96,8 +96,8 @@ def home():
     return render_template('entries.html', entries=entries)
 
 
-@app.route('/new', methods=['GET', 'POST'])
-def new():
+@app.route('/new_entry', methods=['GET', 'POST'])
+def new_entry():
     if not session.get('logged_in'):
         abort(401)
     form = EntryForm(request.form)
@@ -108,7 +108,14 @@ def new():
         db.commit()
         flash('New entry was successfully posted')
         return redirect(url_for('home'))
+
     return render_template('new.html', form=form)
+
+
+@app.route('/new_page', methods=['GET', 'POST'])
+def new_page():
+    # TODO
+    pass
 
 
 @app.route('/login', methods=['GET', 'POST'])
