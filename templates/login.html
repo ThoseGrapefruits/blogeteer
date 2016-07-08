@@ -6,16 +6,17 @@
         <p class="error"><strong>Something went wrong: </strong> {{ error }}
     {% endif %}
 
-<form method=post action="{{ url_for(dest) }}">
-  <dl>
-    {{ render_field(form.username) }}
-    {% if dest != 'login' %}
-        {{ render_field(form.email) }}
-    {% endif %}
-    {{ render_field(form.password) }}
-   <input type=submit value={{ val }}>
-  </dl>
-</form>
+    <form method=post action="{{ url_for(dest) }}">
+        <dl>
+            {{ form.hidden_tag() }}
+            {{ render_field(form.username) }}
+            {% if dest != 'login' %}
+                {{ render_field(form.email) }}
+            {% endif %}
+            {{ render_field(form.password) }}
+            <input type=submit value={{ val }}>
+        </dl>
+    </form>
     {% if dest == 'login' %}
         <p>No account? <a href="{{ url_for('register') }}" method="post">Register here.</a>
     {% endif %}
