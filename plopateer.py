@@ -14,8 +14,8 @@ from sqlite3 import dbapi2 as sqlite
 
 import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
+from flask_wtf import Form, CsrfProtect
 from wtforms import StringField, PasswordField, FileField, validators, RadioField, TextAreaField
-from flask_wtf import Form
 
 # noinspection PyUnresolvedReferences
 from passlib.hash import pbkdf2_sha256
@@ -26,6 +26,7 @@ import re
 
 # Load Flask
 app = Flask(__name__)
+CsrfProtect(app)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
@@ -116,13 +117,13 @@ def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        cur = db.execute('select id, username, passhash from users where username=?',
+        cur = db.execute('select passhash from users where username=?',
                          (request.form['username'],))
         entry = cur.fetchone()
 
         if entry is None:
             error = 'Invalid username'
-        elif not pbkdf2_sha256.verify(request.form['password'], entry['passhash']):
+        elif not verify_password(request.form['password'], entry['passhash']):
             error = 'Invalid password'
         else:
             session['logged_in'] = True
@@ -142,13 +143,22 @@ def register():
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        db.execute('insert into users (username, email, passhash) values (?, ?, ?)',
-                   (form.username.data, form.email.data,
-                    pbkdf2_sha256.encrypt(form.password.data, rounds=200000, salt_size=16)))
-        db.commit()
-        session['logged_in'] = True
-        flash('Thanks for registering')
-        return redirect(url_for('home'))
+        possible_current_user = db.execute('select * from users where username=?',
+                                           (form.username.data,)).fetchone()
+        if possible_current_user is None:
+            db.execute('insert into users (username, email, passhash) values (?, ?, ?)',
+                       (form.username.data, form.email.data, hash_password(form.password.data)))
+            db.commit()
+            session['logged_in'] = True
+            flash('Thanks for registering')
+            return redirect(url_for('home'))
+        elif verify_password(form.password.data, possible_current_user['passhash']):
+            flash('You already have an account. You have been logged in.')
+            return redirect(url_for('home'))
+        else:
+            error = u'The username <em>{}</em> is taken.'.format(form.username.data)
+    elif request.method == 'POST':
+        error = 'Invalid input'
     return render_template('login.html', error=error, dest='register', val='Register', form=form)
 
 
@@ -235,6 +245,17 @@ def canonicalize(username):
     """
     if re.match(app.config['REGEXP']['username'], username):
         return username.lower()
+
+
+# ------------------------------------------------------------------------------------------------
+
+# PASSWORDS
+
+def hash_password(password):
+    return pbkdf2_sha256.encrypt(password, rounds=200000, salt_size=16)
+
+def verify_password(password, passhash):
+    return pbkdf2_sha256.verify(password, passhash)
 
 
 # ------------------------------------------------------------------------------------------------
