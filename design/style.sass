@@ -23,6 +23,9 @@ $space-s: 0.2em
 $space-m: 0.4em
 $space-l: 1em
 
+$w-input-text: 14em
+$w-input-textarea: 21em
+
 // Timing
 $delay-s: 100ms
 $delay-m: 200ms
@@ -149,6 +152,7 @@ form
   margin: $space-l $space-l $space-l 0
 
 input[type='text'], textarea
+  width: $w-input-text
   padding: $space-m
   background: none
   color: $faded-plum
@@ -165,6 +169,7 @@ input[type='text']
   border-bottom: $space-s solid $trans6-faded-plum
 
 textarea
+  width: $w-input-textarea
   background: none
   padding: $space-l
   border-left: $space-s solid $trans6-faded-plum
@@ -173,8 +178,13 @@ textarea
 input:focus, textarea:focus
   outline: none
 
-input[type="submit"]
+input[type='submit'], input[type='textarea']
   font-family: $deco-font-stack
+  background: none
+  border: none
+  color: $faded-plum
+  font-size: 1em
+  border-bottom: $space-s solid $trans6-faded-plum
 
   &:after
     content: ''

@@ -76,6 +76,7 @@ form {
   margin: 1em 1em 1em 0; }
 
 input[type='text'], textarea {
+  width: 14em;
   padding: 0.4em;
   background: none;
   color: #e1b4b6;
@@ -92,6 +93,7 @@ input[type='text'] {
   border-bottom: 0.2em solid rgba(225, 180, 182, 0.6); }
 
 textarea {
+  width: 21em;
   background: none;
   padding: 1em;
   border-left: 0.2em solid rgba(225, 180, 182, 0.6); }
@@ -99,16 +101,21 @@ textarea {
 input:focus, textarea:focus {
   outline: none; }
 
-input[type="submit"] {
-  font-family: "Cormorant Unicase", serif; }
-  input[type="submit"]:after {
+input[type='submit'], input[type='textarea'] {
+  font-family: "Cormorant Unicase", serif;
+  background: none;
+  border: none;
+  color: #e1b4b6;
+  font-size: 1em;
+  border-bottom: 0.2em solid rgba(225, 180, 182, 0.6); }
+  input[type='submit']:after, input[type='textarea']:after {
     content: "";
     background: none;
     display: block;
     margin-top: 0;
     border-top: 0.2em solid rgba(225, 180, 182, 0.2);
     transition: background-color 200ms; }
-  input[type="submit"]:hover {
+  input[type='submit']:hover, input[type='textarea']:hover {
     cursor: pointer;
     background-color: rgba(225, 180, 182, 0.2);
     transition: background-color 200ms; }
