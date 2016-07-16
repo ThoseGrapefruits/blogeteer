@@ -23,7 +23,6 @@ from werkzeug.utils import secure_filename
 import datetime
 from PIL import Image
 import re
-import string
 
 # Load Flask
 app = Flask(__name__)
@@ -96,7 +95,7 @@ def close_db(error):
 @app.route('/')
 def home():
     db = get_db()
-    cur = db.execute('select title, author, body, media from entries order by id desc')
+    cur = db.execute('select title, author, body, media from entries order by date_time desc')
     entries = cur.fetchall()
     return render_template('entries.html', entries=entries)
 
@@ -113,7 +112,8 @@ def new_entry():
             db.execute('insert into entries (slug, title, author, body, media) values (?,?,?,?,?)',
                        (request.form['title'], request.form['body']))
         else:
-            db.execute('insert into entries (slug, title, author, body) values (?, ?)',
+            # TODO: Add rest of fields
+            db.execute('insert into entries (slug, title, author, body) values (?,?,?,?)',
                        (request.form['title'], request.form['body']))
         db.commit()
         flash('New entry was successfully posted')
@@ -230,6 +230,8 @@ class LoginForm(Form):
 
 
 class RegistrationForm(LoginForm):
+    full_name = StringField('Full Name', (validators.optional,))
+    print(full_name.validators[validators.optional])
     email = StringField('Email Address', (validators.Email(), validators.Length(min=6, max=128)))
 
 

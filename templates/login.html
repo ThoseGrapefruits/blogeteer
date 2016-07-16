@@ -11,6 +11,7 @@
             {{ form.hidden_tag() }}
             {{ render_field(form.username) }}
             {% if dest != 'login' %}
+                {{ render_field(form.full_name) }}
                 {{ render_field(form.email) }}
             {% endif %}
             {{ render_field(form.password) }}

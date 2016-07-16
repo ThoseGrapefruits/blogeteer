@@ -134,6 +134,7 @@ i, cite, em, var, address, dfn
 // FORMS
 
 dt
+  padding-top: $space-m
   display: inline-block
   vertical-align: top
   width: 7em
@@ -151,7 +152,7 @@ form dl div
 form
   margin: $space-l $space-l $space-l 0
 
-input[type='text'], textarea
+input[type='text'], input[type='password'], textarea
   padding: $space-m
   background: none
   border: none
@@ -161,21 +162,11 @@ input[type='text'], textarea
   margin-top: 0
   margin-bottom: $space-l
   width: $w-input-text
-  &:hover
-    &::-webkit-resizer
-      border-right: solid $space-s $light-grey
-      border-bottom: solid $space-s $light-grey
   &:-webkit-autofill
     -webkit-box-shadow: 0 0 0 1000em $dark-grey inset
     -webkit-text-fill-color: $faded-plum !important
-  &::-webkit-scrollbar
-    color: $faded-plum
-  &::-webkit-resizer
-    background-image: none
-  &::-webkit-scrollbar-corner
-    background: $dark-grey
 
-input[type='text']
+input[type='text'], input[type='password']
   border-bottom: $space-s solid $trans6-faded-plum
 
 textarea
@@ -184,6 +175,18 @@ textarea
   padding: $space-l
   border-left: $space-s solid $trans6-faded-plum
   //border-right: $space-s solid $trans6-faded-plum
+  &:hover
+    &::-webkit-resizer
+      border-right: solid $space-s $trans6-faded-plum
+      border-bottom: solid $space-s $trans6-faded-plum
+      transition: -webkit-resizer $delay-m
+      transition: border $delay-m
+  &::-webkit-scrollbar
+    color: $faded-plum
+  &::-webkit-resizer
+    background-image: none
+  &::-webkit-scrollbar-corner
+    background: $dark-grey
 
 input:focus, textarea:focus
   outline: none
