@@ -152,18 +152,28 @@ form
   margin: $space-l $space-l $space-l 0
 
 input[type='text'], textarea
-  width: $w-input-text
   padding: $space-m
   background: none
+  border: none
   color: $faded-plum
   font-family: $para-font-stack
   font-size: 1em
-  border: none
   margin-top: 0
   margin-bottom: $space-l
+  width: $w-input-text
+  &:hover
+    &::-webkit-resizer
+      border-right: solid $space-s $light-grey
+      border-bottom: solid $space-s $light-grey
   &:-webkit-autofill
     -webkit-box-shadow: 0 0 0 1000em $dark-grey inset
     -webkit-text-fill-color: $faded-plum !important
+  &::-webkit-scrollbar
+    color: $faded-plum
+  &::-webkit-resizer
+    background-image: none
+  &::-webkit-scrollbar-corner
+    background: $dark-grey
 
 input[type='text']
   border-bottom: $space-s solid $trans6-faded-plum

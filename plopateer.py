@@ -23,6 +23,7 @@ from werkzeug.utils import secure_filename
 import datetime
 from PIL import Image
 import re
+import string
 
 # Load Flask
 app = Flask(__name__)
@@ -36,8 +37,12 @@ app.config.update(dict(
     REGISTRATION=True,
     ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg', 'gif'},
     UPLOAD_DIR=os.path.join(app.root_path, 'media'),
-    REGEXP={'username': re.compile(r'^([A-Za-z\d]+)$'),
-            'filename': re.compile(r'^[^/\\]+\.jpg$')}
+    REGEXP={
+        'username': re.compile(r'^([A-Za-z\d]+)$'),
+        'filename': re.compile(r'^[^/\\]+\.jpg$'),
+        'char_slug': re.compile(r'[-a-zA-Z0-9]'),
+        'char_non_slug': re.compile(r'[^-a-zA-Z0-9]'),
+        'dashes': re.compile(r'-{2,}')}
 ))
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
@@ -103,8 +108,13 @@ def new_entry():
     form = EntryForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        db.execute('insert into entries (title, body) values (?, ?)',
-                   (request.form['title'], request.form['body']))
+        if request.form['media'] is not None and len(request.form['media']) != 0:
+            # TODO: Check for length of media and act accordingly
+            db.execute('insert into entries (slug, title, author, body, media) values (?,?,?,?,?)',
+                       (request.form['title'], request.form['body']))
+        else:
+            db.execute('insert into entries (slug, title, author, body) values (?, ?)',
+                       (request.form['title'], request.form['body']))
         db.commit()
         flash('New entry was successfully posted')
         return redirect(url_for('home'))
@@ -227,7 +237,8 @@ class EntryForm(Form):
     """Base form for entries of all kinds"""
     title = StringField('Title', (validators.InputRequired(), validators.Length(max=128)))
     radio = RadioField('Label', choices=[('value', 'description'), ('value_two', 'whatever')])
-    files = FileField(u'Image File(s)', (validators.regexp(app.config['REGEXP']['filename']),),
+    files = FileField(u'Image File(s)', (validators.regexp(app.config['REGEXP']['filename']),
+                                         validators.optional()),
                       render_kw={'multiple': True})
     body = TextAreaField('Body', (validators.Length(max=1000000),),
                          render_kw={'cols': 35, 'rows': 20})
@@ -254,12 +265,25 @@ def canonicalize(username):
         return username.lower()
 
 
+def slugify(initial=''):
+    """
+    Slugify the given string for use in URLs. Will convert capitals to lowercase, then map all non-
+    dash and non-alphanumeric characters to dashes, then squash dash series into single dashes.
+
+    :param initial: initial string to slugify
+    :return: slug
+    """
+    return re.sub(app.config['REGEXP']['dashes'], '-',
+                  re.sub(app.config['REGEXP']['char_non_slug'], '-', initial.lower())).strip('-')
+
+
 # ------------------------------------------------------------------------------------------------
 
 # PASSWORDS
 
 def hash_password(password):
     return pbkdf2_sha256.encrypt(password, rounds=200000, salt_size=16)
+
 
 def verify_password(password, passhash):
     return pbkdf2_sha256.verify(password, passhash)

@@ -76,18 +76,27 @@ form {
   margin: 1em 1em 1em 0; }
 
 input[type='text'], textarea {
-  width: 14em;
   padding: 0.4em;
   background: none;
+  border: none;
   color: #e1b4b6;
   font-family: "Cormorant", serif;
   font-size: 1em;
-  border: none;
   margin-top: 0;
-  margin-bottom: 1em; }
+  margin-bottom: 1em;
+  width: 14em; }
+  input[type='text']:hover::-webkit-resizer, textarea:hover::-webkit-resizer {
+    border-right: solid 0.2em #cccccc;
+    border-bottom: solid 0.2em #cccccc; }
   input[type='text']:-webkit-autofill, textarea:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000em #333333 inset;
     -webkit-text-fill-color: #e1b4b6 !important; }
+  input[type='text']::-webkit-scrollbar, textarea::-webkit-scrollbar {
+    color: #e1b4b6; }
+  input[type='text']::-webkit-resizer, textarea::-webkit-resizer {
+    background-image: none; }
+  input[type='text']::-webkit-scrollbar-corner, textarea::-webkit-scrollbar-corner {
+    background: #333333; }
 
 input[type='text'] {
   border-bottom: 0.2em solid rgba(225, 180, 182, 0.6); }
