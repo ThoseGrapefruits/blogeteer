@@ -1,0 +1,7 @@
+{% macro render_entry(entry) %}
+    <div class="entry">
+    <h2>{{ entry['title'] }}</h2>
+        <p><em>{{ entry['author'] }}</em></p>
+    <p>{{ entry['body'] }}
+    </div>
+{% endmacro %}

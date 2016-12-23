@@ -161,15 +161,29 @@ def entry_by_id(post_id):
 @app.route('/post/<post_name>')
 def entry_by_name(post_name):
     # NOTE: prefix posts with number-only titles
-    return 'Post {}'.format(post_name) # TODO
+    db = get_db()
+    entry = db.execute('select title, author, body, media from entries where id=?', post_name).fetchone()
+    return render_template('entry.html', title=entry['title'], body=entry['body'])
+
+
+class Entry:
+    def __init__(self, entry):
+        db = get_db()
+        for attribute in ('title', 'author', 'body', 'media'):
+            self.__setattr__(attribute, entry[attribute])
+        entry = db.execute('select username, fullname from users where id=?', str(entry['author']))
+        self.author_fullname = entry['fullname']
+        self.author_username = entry['username']
 
 
 @app.route('/user/<int:user_id>')
 def profile_by_id(user_id):
     db = get_db()
-    entry = db.execute('select username, fullname, bio from users where id=?', str(user_id)).fetchone()
+    user_id = str(user_id)
+    entry = db.execute('select username, fullname, bio from users where id=?', user_id).fetchone()
     name = '{} ({})'.format(entry['fullname'], entry['username']) if entry['fullname'] else entry['username']
-    return render_template('entry.html', title=name, body=entry['bio'])
+    posts = db.execute('select title, body, media from entries where author=?', entry[user_id])
+    return render_template('entry.html', title=name, body=entry['bio'], associated_posts=)
 
 
 @app.route('/user/<username>')
