@@ -1,8 +1,8 @@
-# Plopateer
-> minimal photo and project-based blogosphere plopper with an emphasis on looking fabulous
+# Blogeteer
+> minimal photo and project-based blog site builder
 
 #### Pronounciation
-`plop + (musketeer - musk)`
+`blog + (musketeer - musk)`
 
 ##Usage
 - `./runserver initdb` the first time, to initialise the database.
