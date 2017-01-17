@@ -10,9 +10,9 @@ if [ "$1" == "initdb" ]; then
   fi
 
   case "$response" in 
-       [yY]) FLASK_APP=plopateer.py flask initdb;;
+       [yY]) FLASK_APP=blogeteer.py flask initdb;;
           ?) echo "Database initialisation cancelled.";;
   esac
 fi
 
-FLASK_APP=plopateer.py flask run
+FLASK_APP=blogeteer.py flask run

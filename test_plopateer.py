@@ -1,4 +1,4 @@
-import plopateer
+import blogeteer
 
 
 def test_slugify():
@@ -9,7 +9,7 @@ def test_slugify():
         'hey--hey----hey$*(#%&@#': 'hey-hey-hey'
     }
     for (key, value) in input_result.items():
-        assert plopateer.slugify(key) == value
+        assert blogeteer.slugify(key) == value
 
 
 # ------------------------------------------------------------------------------------------------

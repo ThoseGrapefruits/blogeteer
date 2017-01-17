@@ -1,7 +1,7 @@
 #!/bin/sh
 if [[ ! -e .venv ]]; then
 	echo "VirtualEnv not found, creating."
-	virtualenv --no-site-packages --distribute .venv
+	virtualenv -p python3 .venv
 else
 	echo "VirtualEnv found."
 fi
@@ -11,10 +11,11 @@ if [[ -e .venv/bin ]]; then
 elif [[ -e .venv/Scripts ]]; then
 	source .venv/Scripts/activate
 else
+  echo "Could not source VirtualEnv"
 	break
 fi
 echo "Activated VirtualEnv, checking requirements:"
 
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 echo "VirtualEnv setup complete."

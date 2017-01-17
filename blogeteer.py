@@ -17,7 +17,6 @@ from flask import Flask, request, g, session, redirect, flash, abort, url_for, r
 from flask_wtf import Form, CsrfProtect
 from wtforms import StringField, PasswordField, FileField, validators, RadioField, TextAreaField
 
-# noinspection PyUnresolvedReferences
 from passlib.hash import pbkdf2_sha256
 from werkzeug.utils import secure_filename
 import datetime
@@ -41,7 +40,7 @@ app.config.update(dict(
         'filename': re.compile(r'^[^/\\]+\.jpg$'),
         'char_slug': re.compile(r'[-a-zA-Z0-9]'),
         'char_non_slug': re.compile(r'[^-a-zA-Z0-9]'),
-        'dashes': re.compile(r'-{2,}')}
+        'dashes': re.compile(r'-{2,}')},
 ))
 app.config.from_envvar('PLOP_SETTINGS', silent=True)
 
@@ -225,14 +224,13 @@ def profile(username):
 
 class LoginForm(Form):
     username = StringField('Username', (validators.Length(min=1, max=32),
-                                        validators.regexp(r'^([A-Za-z0-9]+)$')))
+                                        validators.regexp(app.config['REGEXP']['username'])))
     password = PasswordField('Password', (validators.Length(min=8, max=128),))
 
 
 class RegistrationForm(LoginForm):
-    full_name = StringField('Full Name', (validators.optional,))
-    print(full_name.validators[validators.optional])
-    email = StringField('Email Address', (validators.Email(), validators.Length(min=6, max=128)))
+    full_name = StringField('Full Name')
+    email = StringField('Email Address')
 
 
 class EntryForm(Form):
