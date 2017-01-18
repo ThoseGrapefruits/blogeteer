@@ -8,15 +8,17 @@ create table users (
   email    text not null,
   passhash text not null,
   fullname text,
-  bio      text
+  bio      text,
+  creation_date datetime default current_timestamp
 );
 
 create table entries (
-  slug      text primary key,
-  title     text not null,
+  id        integer primary key autoincrement,
+  slug      text unique,
+  title     text ,
   author    text not null,
-  body      text not null,
-  media     text, -- link or path to media / photo gallery
+  body      text,
+  media     text, -- optional link or path to media / photo gallery
   date_time datetime default current_timestamp,
   foreign key (author) references users (username)
 );
@@ -35,7 +37,7 @@ create table media (
 );
 
 create table user_temp (
-  username    text primare key,
+  username    text primary key,
   temp_key    text not null,
   destination text not null
 );

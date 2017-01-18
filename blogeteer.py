@@ -1,5 +1,5 @@
 """
-    Plopateer
+    Blogeteer
     ~~~~~~~~~
 
     A minimal photo- and project-based microblog/website builder.
@@ -14,6 +14,7 @@ from sqlite3 import dbapi2 as sqlite
 
 import os
 from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
+import flask_login
 from flask_wtf import Form, CsrfProtect
 from wtforms import StringField, PasswordField, FileField, validators, RadioField, TextAreaField
 
@@ -29,20 +30,84 @@ CsrfProtect(app)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'plop.db'),
+    ALLOWED_EXTENSIONS=('png', 'jpg', 'jpeg', 'gif'),
+    DATABASE=os.path.join(app.root_path, 'blogeteer.db'),
     DEBUG=True,
-    SECRET_KEY='development key',
+    MAX_CONTENT_LENGTH=16 * 1024 * 1024,
     REGISTRATION=True,
-    ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg', 'gif'},
-    UPLOAD_DIR=os.path.join(app.root_path, 'media'),
     REGEXP={
         'username': re.compile(r'^([A-Za-z\d]+)$'),
         'filename': re.compile(r'^[^/\\]+\.jpg$'),
         'char_slug': re.compile(r'[-a-zA-Z0-9]'),
         'char_non_slug': re.compile(r'[^-a-zA-Z0-9]'),
         'dashes': re.compile(r'-{2,}')},
+    SECRET_KEY='development key',
+    UPLOAD_DIR=os.path.join(app.root_path, 'media'),
 ))
-app.config.from_envvar('PLOP_SETTINGS', silent=True)
+app.config.from_envvar('BLOGETEER_SETTINGS', silent=True)
+
+# ------------------------------------------------------------------------------------------------
+
+# LOGIN & SESSION MANAGEMENT
+
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+
+
+def log_user_in(username):
+    user = User()
+    user.username = username
+    flask_login.login_user(user)
+    return user
+
+
+class User(flask_login.UserMixin):
+    def __init__(self):
+        self.username = None
+
+    def get_id(self):
+        return self.username
+
+
+def load_user_login(username):
+    username = canonicalize(username)
+    db = get_db()
+
+    cur = db.execute('select passhash, username from users where username=? or email=?',
+                     (username, username))
+    entry = cur.fetchone()
+
+    if not entry:
+        return None
+
+    return entry
+
+
+@login_manager.user_loader
+def user_loader(username):
+    user_entry = load_user_login(username)
+
+    if not user_entry:
+        return
+
+    user = User()
+    user.username = user_entry['username']
+
+    return user
+
+
+@login_manager.request_loader
+def request_loader(request):
+    user_entry = load_user_login(request.form.get('username'))
+    if not user_entry:
+        return
+
+    user = User()
+    user.username = user_entry['username']
+
+    user.is_authenticated = verify_password(request.form['password'], user_entry['passhash'])
+
+    return user
 
 
 # ------------------------------------------------------------------------------------------------
@@ -99,26 +164,22 @@ def home():
     return render_template('entries.html', entries=entries)
 
 
+@flask_login.login_required
 @app.route('/new_entry', methods=['GET', 'POST'])
 def new_entry():
-    if not session.get('logged_in'):
-        abort(401)
     form = EntryForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        if request.form['media'] is not None and len(request.form['media']) != 0:
-            # TODO: Check for length of media and act accordingly
-            db.execute('insert into entries (slug, title, author, body, media) values (?,?,?,?,?)',
-                       (request.form['title'], request.form['body']))
-        else:
-            # TODO: Add rest of fields
-            db.execute('insert into entries (slug, title, author, body) values (?,?,?,?)',
-                       (request.form['title'], request.form['body']))
+        # TODO file upload
+
+        db.execute('insert into entries (slug, title, author, body) values (?,?,?,?)',
+                   (slugify(form.title.data), form.title.data, flask_login.current_user.username,
+                    form.body.data,))
         db.commit()
         flash('New entry was successfully posted')
         return redirect(url_for('home'))
 
-    return render_template('new.html', form=form)
+    return render_template('new_entry.html', form=form)
 
 
 @app.route('/new_page', methods=['GET', 'POST'])
@@ -133,8 +194,9 @@ def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
+        username = canonicalize(request.form['username'])
         cur = db.execute('select passhash from users where username=?',
-                         (request.form['username'],))
+                         (username,))
         entry = cur.fetchone()
 
         if entry is None:
@@ -142,10 +204,10 @@ def login():
         elif not verify_password(request.form['password'], entry['passhash']):
             error = 'Invalid password'
         else:
-            session['logged_in'] = True
-            flash('You are logged in')
+            log_user_in(username)
             return redirect(url_for('home'))
-    return render_template('login.html', error=error, dest='login', val='Login', form=form)
+    return render_template('login.html',
+                           error=error, dest='login', val='Login', form=form)
 
 
 @app.route('/reset_password', methods=['GET', 'POST'])
@@ -159,13 +221,14 @@ def register():
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
         db = get_db()
-        possible_current_user = db.execute('select * from users where username=?',
-                                           (form.username.data,)).fetchone()
+        username = canonicalize(form.username.data)
+        possible_current_user = db.execute('select passhash from users where username=?',
+                                           (username,)).fetchone()
         if possible_current_user is None:
             db.execute('insert into users (username, email, passhash) values (?, ?, ?)',
-                       (form.username.data, form.email.data, hash_password(form.password.data)))
+                       (username, form.email.data, hash_password(form.password.data)))
             db.commit()
-            session['logged_in'] = True
+            log_user_in(username)
             flash('Thanks for registering')
             return redirect(url_for('home'))
         elif verify_password(form.password.data, possible_current_user['passhash']):
@@ -180,7 +243,7 @@ def register():
 
 @app.route('/logout')
 def logout():
-    session.pop('logged_in', None)
+    flask_login.logout_user()
     flash('You were logged out')
     return redirect(url_for('home'))
 
@@ -206,15 +269,19 @@ def not_found(title, message):
 
 @app.route('/user/<string:username>')
 def profile(username):
+    username = canonicalize(username)
     db = get_db()
-    entry = db.execute('select username, fullname, bio from users where username=?', username) \
+    entry = db.execute('select username, fullname, bio from users where username=?', (username,)) \
         .fetchone()
 
     if entry is None:
         return render_template('404.html', title='User not found.')
 
-    name = '{} ({})'.format(entry['fullname'], entry['username']) \
-        if entry['fullname'] else entry['username']
+    if entry['fullname']:
+        name = f'{entry["fullname"]} ({entry["username"]})'
+    else:
+        name = entry['username']
+
     return render_template('entry.html', title=name, body=entry['bio'])
 
 
@@ -234,22 +301,31 @@ class RegistrationForm(LoginForm):
 
 
 class EntryForm(Form):
-    """Base form for entries of all kinds"""
+    """Base form for text entries"""
     title = StringField('Title', (validators.InputRequired(), validators.Length(max=128)))
-    radio = RadioField('Label', choices=[('value', 'description'), ('value_two', 'whatever')])
-    files = FileField(u'Image File(s)', (validators.regexp(app.config['REGEXP']['filename']),
-                                         validators.optional()),
-                      render_kw={'multiple': True})
     body = TextAreaField('Body', (validators.Length(max=1000000),),
                          render_kw={'cols': 35, 'rows': 20})
 
 
 class MediaEntryForm(EntryForm):
     """Form for entries containing media (media galleries, pictures, etc)"""
+    files = FileField(u'Image File(s)', (validators.regexp(app.config['REGEXP']['filename']),
+                                         validators.optional()),
+                      render_kw={'multiple': True})
 
 
-class TextEntryForm(EntryForm):
-    """Form for text-only entries"""
+class ChoiceEntryForm(EntryForm):
+    """Form for entries requiring a variety of options"""
+
+    radio = RadioField('Label', choices=[])
+
+    def ChoiceEntryForm(self, label, choices):
+        """
+        :param label: String label for the RadioField
+        :param choices: dictionary of options and their descriptions
+        :return: a new ChoiceEntryForm
+        """
+        self.radio = RadioField([(key, value) for key, value in choices.items()])
 
 
 def canonicalize(username):
@@ -261,7 +337,7 @@ def canonicalize(username):
     :type   username: str
     :return:
     """
-    if re.match(app.config['REGEXP']['username'], username):
+    if username and app.config.get('REGEXP')['username'].match(username):
         return username.lower()
 
 
@@ -273,8 +349,8 @@ def slugify(initial=''):
     :param initial: initial string to slugify
     :return: slug
     """
-    return re.sub(app.config['REGEXP']['dashes'], '-',
-                  re.sub(app.config['REGEXP']['char_non_slug'], '-', initial.lower())).strip('-')
+    return app.config['REGEXP']['dashes'].sub('-', app.config['REGEXP']['char_non_slug'] \
+                                              .sub('-', initial.lower()).strip('-'))
 
 
 # ------------------------------------------------------------------------------------------------
@@ -282,7 +358,7 @@ def slugify(initial=''):
 # PASSWORDS
 
 def hash_password(password):
-    return pbkdf2_sha256.encrypt(password, rounds=200000, salt_size=16)
+    return pbkdf2_sha256.encrypt(password, rounds=20000, salt_size=16)
 
 
 def verify_password(password, passhash):
@@ -386,4 +462,4 @@ class ThumbnailImage(SubImage):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

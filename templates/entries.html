@@ -2,8 +2,8 @@
 {% block body %}
   <ul class="entries">
   {% for entry in entries %}
-    <li><h2>{{ entry.title }}</h2>
-    {{ entry.body|safe }}
+    <a href="{{ url_for( }}"<li><h2>{{ entry.title }}</h2>
+    <p>{{ entry.body|safe }}
   {% else %}
     <li><em>No entries yet.</em>
   {% endfor %}
