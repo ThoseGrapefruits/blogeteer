@@ -159,7 +159,7 @@ def close_db(error):
 @app.route('/')
 def home():
     db = get_db()
-    cur = db.execute('select title, author, body, media from entries order by date_time desc')
+    cur = db.execute('select id, title, author, body, media from entries order by date_time desc')
     entries = cur.fetchall()
     return render_template('entries.html', entries=entries)
 
@@ -248,10 +248,10 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route('/post/<int:post_id>')
-def entry_by_id(post_id):
+@app.route('/post/<int:entry_id>')
+def entry_by_id(entry_id):
     db = get_db()
-    entry = db.execute('select title, author, body, media from entries where id=?', str(post_id)) \
+    entry = db.execute('select id, title, author, body, media from entries where id=?', str(entry_id)) \
         .fetchone()
     return render_template('entry.html', title=entry['title'], body=entry['body'])
 
@@ -268,7 +268,7 @@ def not_found(title, message):
 
 
 @app.route('/user/<string:username>')
-def profile(username):
+def user(username):
     username = canonicalize(username)
     db = get_db()
     entry = db.execute('select username, fullname, bio from users where username=?', (username,)) \
@@ -277,10 +277,10 @@ def profile(username):
     if entry is None:
         return render_template('404.html', title='User not found.')
 
-    if entry['fullname']:
-        name = f'{entry["fullname"]} ({entry["username"]})'
-    else:
-        name = entry['username']
+    if username == flask_login.current_user.username:
+        return render_template()
+
+    name = entry['fullname'] or entry['username']
 
     return render_template('entry.html', title=name, body=entry['bio'])
 

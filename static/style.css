@@ -27,12 +27,16 @@ a, h1, h2 {
     display: inline-block;
     text-decoration: none;
     margin-bottom: 1em;
-    padding: 0.2em;
+    margin-right: 0.2em;
+    padding: 0;
     color: #e1b4b6; }
     .top h1 a:after {
       border-top: none; }
     .top h1 a:hover {
       background: none; }
+
+p {
+  text-align: justify; }
 
 a {
   display: inline-block;
@@ -50,9 +54,9 @@ a {
     background-color: rgba(225, 180, 182, 0.2);
     transition: background 200ms; }
 
-i, cite, em, var, address, dfn {
+i, cite, em, var, address, dfn, .author {
   font-style: normal; }
-  i:before, i:after, cite:before, cite:after, em:before, em:after, var:before, var:after, address:before, address:after, dfn:before, dfn:after {
+  i:before, i:after, cite:before, cite:after, em:before, em:after, var:before, var:after, address:before, address:after, dfn:before, dfn:after, .author:before, .author:after {
     content: "/";
     color: #e1b4b6;
     padding: 0 0.1em; }
@@ -152,8 +156,5 @@ input[type='submit'], input[type='textarea'] {
 
 .entries li {
   margin: 0.4em 1em; }
-
-.entries li h2 {
-  margin-left: -1em; }
 
 /*# sourceMappingURL=style.css.map */

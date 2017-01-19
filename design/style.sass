@@ -41,6 +41,10 @@ $delay-l: 400ms
   -webkit-box-shadow: $shadows
   box-shadow: $shadows
 
+@mixin slash()
+  content: '/'
+  color: $faded-plum
+  padding: 0 0.1em
 
 // ----------------------------------------------------------------------------
 
@@ -75,7 +79,8 @@ a, h1, h2
     display: inline-block
     text-decoration: none
     margin-bottom: $space-l
-    padding: $space-s
+    margin-right: $space-s
+    padding: 0
     color: $faded-plum
 
     &:after
@@ -84,21 +89,8 @@ a, h1, h2
     &:hover
       background: none
 
-// Old header decorations
-//.top:after, .top:after
-  content: ''
-  background: none
-  display: block
-  margin-bottom: -$s-m
-  border-bottom: $s-m solid $trans-faded-plum
-
-// h1:before, h2:before
-  content: ''
-  background: none
-  display: block
-  margin-bottom: -$s-m
-  border-bottom: $s-s solid $trans-faded-plum
-
+p
+  text-align: justify
 
 // ----------------------------------------------------------------------------
 
@@ -121,13 +113,11 @@ a
     background-color: $trans2-faded-plum
     transition: background $delay-m
 
-i, cite, em, var, address, dfn
+i, cite, em, var, address, dfn, .author
   font-style: normal
 
   &:before, &:after
-    content: '/'
-    color: $faded-plum
-    padding: 0 0.1em
+    @include slash
 
 // ----------------------------------------------------------------------------
 
@@ -237,7 +227,3 @@ input[type='submit'], input[type='textarea']
 
 .entries li
   margin: $space-m $space-l
-
-.entries li h2
-  margin-left: -$space-l
-

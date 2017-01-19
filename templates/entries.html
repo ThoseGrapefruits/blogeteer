@@ -2,10 +2,16 @@
 {% block body %}
   <ul class="entries">
   {% for entry in entries %}
-    <a href="{{ url_for( }}"<li><h2>{{ entry.title }}</h2>
-    <p>{{ entry.body|safe }}
+      {% set entry_url = url_for('entry_by_id', entry_id=entry.id) %}
+      {% set author_url = url_for('user', username=entry.author) %}
+
+      <li>
+          <a href="{{ entry_url }}"><h2>{{ entry.title }}</h2>
+              <p>{{ entry.body[0:200]|safe }} <span class="author">{{ "by " + entry.author }}</span></p>
+          </a>
+      </li>
   {% else %}
-    <li><em>No entries yet.</em>
+      <li><em>No entries yet.</em></li>
   {% endfor %}
   </ul>
 {% endblock %}
