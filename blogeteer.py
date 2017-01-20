@@ -13,7 +13,7 @@
 from sqlite3 import dbapi2 as sqlite
 
 import os
-from flask import Flask, request, g, session, redirect, flash, abort, url_for, render_template
+from flask import Flask, request, g, redirect, flash, url_for, render_template
 import flask_login
 from flask_wtf import Form, CsrfProtect
 from wtforms import StringField, PasswordField, FileField, validators, RadioField, TextAreaField
@@ -262,9 +262,10 @@ def entry_by_name(post_name):
     return 'Post {}'.format(post_name)  # TODO
 
 
+@app.errorhandler(404)
 @app.route('/404')
-def not_found(title, message):
-    return render_template('404.html', title=title, message=message)
+def not_found(title):
+    return render_template('404.html', title=title)
 
 
 @app.route('/user/<string:username>')
@@ -393,18 +394,26 @@ def save_paths(*filenames):
 
 # IMAGE PROCESSING
 
+
+def generate_thumbnails(file_path):
+    for cls in (SubImage, SubSubImage, TinyImage, TinyTinyImage):
+        cls.resize(file_path)
+
+
 class SubImage:
     size = 2048, 2048
     suffix = 'small'
     square = False
 
-    def get_sub_path(self, file_path):
+    @classmethod
+    def get_sub_path(cls, file_path):
         splitext = os.path.splitext(file_path)
         return '{}{}.{}x{}.{}'.format(os.path.dirname(), splitext[0],
-                                      self.size[0], self.size[1], splitext[1])
+                                      cls.size[0], cls.size[1], splitext[1])
 
-    def resize(self, file_path):
-        out_file = self.get_sub_path(file_path)
+    @classmethod
+    def resize(cls, file_path):
+        out_file = cls.get_sub_path(file_path)
         if file_path != out_file:
             try:
                 image = Image.open(file_path)
@@ -413,7 +422,7 @@ class SubImage:
                 except IOError:
                     print('Image could not be read.')
 
-                if self.square:  # Crop image into centred square
+                if cls.square:  # Crop image into centred square
                     (width, height) = image.size()
                     (left, upper, right, lower) = (0, height, width, 0)
                     if width < height:
@@ -426,7 +435,7 @@ class SubImage:
                         right = width - diff
                     image.crop(left, upper, right, lower)
 
-                image.thumbnail(self.size)
+                image.thumbnail(cls.size)
                 image.save(out_file)
             except IOError:
                 message = "Cannot create thumbnail for {}".format(os.path.basename(file_path))
